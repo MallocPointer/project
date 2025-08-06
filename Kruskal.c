@@ -7,7 +7,7 @@
 int m, n;   //m为顶点数，n为边的数目
 
 void initInfo() {
-	scanf("%d%d", &m, &n);
+	scanf_s("%d%d", &m, &n);
 }
 
 
@@ -23,7 +23,7 @@ Edge edges[M];  // 存储所有边
 void initSide() {
 	int vir0, vir1, weight;
 	for (int i = 0; i < n; i++) {
-		scanf("%d%d%d", &vir0, vir1, &weight);
+		scanf_s("%d%d%d", &vir0, &vir1, &weight);
 		edges[i].vir0 = vir0;
 		edges[i].vir1 = vir1;
 		edges[i].weight = weight;
@@ -33,16 +33,17 @@ void initSide() {
 //边排序 此排序算法应该能后期优化
 //按照权值从小到大排序
 void sort() {
-	for (int j = 0; j < n; j++) {
-		for (int k = j; k < n - j - 1; k++) {
-			if (edges[k].weight > edges[k + 1].weight) {
-				int temp = edges[k].weight;
-				edges[k].weight = edges[k + 1].weight;
-				edges[k + 1].weight = temp;
+	for (int i = 0; i < n - 1; i++) {
+		for (int j = 0; j < n - 1 - i; j++) {
+			if (edges[j].weight > edges[j + 1].weight) {
+				Edge temp = edges[j];
+				edges[j] = edges[j + 1];
+				edges[j + 1] = temp;
 			}
 		}
 	}
 }
+
 
 //==============================================
 
@@ -54,13 +55,24 @@ void initVir(int n) {
 	}
 }
 
-//查找当前节点的root编号
+//这个的效率比下方的循环效率高
+//查找当前节点的root编号 路径压缩
 int Find(int x) {
 	if (parent[x] != x) {
-		return Find(parent[x]);
+		parent[x] = Find(parent[x]);
 	}
-	else return x;
+	return parent[x];
 }
+
+/*
+//找到当前节点集合的root编号
+int Find(int f) {
+	while (parent[f] > 0) {
+		f = parent[f];
+	}
+	return f;
+}
+*/
 
 //合并两个集合
 void union_set(int a, int b) {   //a, b 为两节点
@@ -87,27 +99,47 @@ void union_set(int a, int b) {   //a, b 为两节点
 }
 
 
-//找到当前节点集合的root编号
-int Find(int *parent, int f) {
-	while (parent[f] > 0) {
-		f = parent[f];
+
+
+
+int kruskal() {
+	//提供基本数据
+	initInfo();
+
+	//初始化并查集
+	initVir(m);
+
+	//加入数据
+	initSide();
+
+	//排序边数组
+	sort();
+
+	int res = 0, cnt = 0;
+	for (int i = 0; i < n; i++) {
+		int u = edges[i].vir0;
+		int v = edges[i].vir1;
+		int w = edges[i].weight;
+		int fu = Find(u), fv = Find(v);
+		if (fu != fv) {
+			union_set(u, v);  // 把两个集合合并
+			res += w;         // 加上边权
+			cnt++;            // 边数加1
+
+			printf("选中边：%d — %d，权值 = %d\n", u, v, w);
+
+			if (cnt == m - 1) break;  // 生成树边数够了
+		}
 	}
-	return f;
+	return res;
+
+
 }
 
-//优先级数组
-void priorityArrary(Edge pri[]) {
-	int j = 0, k = 0;
-	while ((pri + j) != NULL) {
-		while ((pri + j + k + 1) != NULL) {
-			if ((pri + j + k)->weight > (pri + j + k + 1)->weight) {
-				Edge temp;
-				temp = *(pri + j + k);
-				*(pri + j + k) = *(pri + j + k + 1);
-				*(pri + j + k + 1) = temp;
-			}
-			k++;
-		}
-		j++;
-	}
+int main() {
+	int ans = kruskal();
+	printf("最小生成树权值和: %d\n", ans);
+	getchar();
+	getchar();
+	return 0;
 }
